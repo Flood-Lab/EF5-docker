@@ -33,6 +33,7 @@ docker build -t ef5-docker .
 
 ### Running the Container
 
+#### Interactive Mode
 ```bash
 # Run the container interactively
 docker run -it ef5-docker /bin/bash
@@ -41,16 +42,134 @@ docker run -it ef5-docker /bin/bash
 docker run -it -v /path/to/your/data:/data ef5-docker /bin/bash
 ```
 
+#### Direct EF5 Execution
+```bash
+# Run EF5 directly with arguments
+docker run --rm -v /path/to/your/data:/data ef5-docker /EF5/bin/ef5 [arguments]
+
+# Example: Run EF5 with configuration file
+docker run --rm -v /path/to/your/data:/data ef5-docker /EF5/bin/ef5 -c /data/config.txt
+
+# Example: Run EF5 with help to see available options
+docker run --rm ef5-docker /EF5/bin/ef5 --help
+```
+
 ## Usage
 
-Once inside the container, you can access the EF5 installation:
+### Command Line Arguments
+
+EF5 typically accepts the following types of arguments:
+
+#### Basic Usage
+```bash
+# Check available options
+docker run --rm ef5-docker /EF5/bin/ef5 --help
+
+# Run with configuration file
+docker run --rm -v /path/to/data:/data ef5-docker /EF5/bin/ef5 -c /data/config.txt
+
+# Run with specific output directory
+docker run --rm -v /path/to/data:/data ef5-docker /EF5/bin/ef5 -c /data/config.txt -o /data/output
+
+# Run with verbose output
+docker run --rm -v /path/to/data:/data ef5-docker /EF5/bin/ef5 -c /data/config.txt -v
+```
+
+#### Common Argument Patterns
+```bash
+# Configuration file (required)
+-c /path/to/config.txt
+--config /path/to/config.txt
+
+# Output directory
+-o /path/to/output
+--output /path/to/output
+
+# Input data directory
+-i /path/to/input
+--input /path/to/input
+
+# Verbose mode
+-v
+--verbose
+
+# Help
+-h
+--help
+```
+
+### Volume Mounting for Data
 
 ```bash
-# Navigate to the EF5 directory
-cd EF5
+# Mount your data directory
+docker run --rm \
+  -v /host/data:/data \
+  ef5-docker \
+  /EF5/bin/ef5 -c /data/config.txt -o /data/output
 
-# Run EF5 (refer to EF5 documentation for specific usage)
-./ef5 --help
+# Mount multiple directories
+docker run --rm \
+  -v /host/input:/data/input \
+  -v /host/output:/data/output \
+  -v /host/config:/data/config \
+  ef5-docker \
+  /EF5/bin/ef5 -c /data/config/config.txt -o /data/output
+```
+
+### Interactive Development
+
+```bash
+# Start interactive session
+docker run -it \
+  -v /path/to/your/data:/data \
+  ef5-docker /bin/bash
+
+# Inside the container:
+cd /EF5
+./bin/ef5 --help
+./bin/ef5 -c /data/config.txt
+```
+
+### Environment Variables
+
+You can also pass environment variables to configure EF5 behavior:
+
+```bash
+# Set environment variables
+docker run --rm \
+  -v /path/to/data:/data \
+  -e EF5_CONFIG_PATH=/data/config \
+  -e EF5_OUTPUT_PATH=/data/output \
+  ef5-docker \
+  /EF5/bin/ef5 -c /data/config.txt
+```
+
+### Complete Example
+
+Here's a complete example of running EF5 with a typical hydrological modeling workflow:
+
+```bash
+# 1. Prepare your data structure
+mkdir -p /host/data/{input,output,config}
+
+# 2. Copy your configuration and data files
+cp your_config.txt /host/data/config/
+cp your_dem.tif /host/data/input/
+cp your_precip.nc /host/data/input/
+
+# 3. Run EF5 with all necessary arguments
+docker run --rm \
+  -v /host/data:/data \
+  --name ef5-simulation \
+  ef5-docker \
+  /EF5/bin/ef5 \
+    -c /data/config/your_config.txt \
+    -i /data/input \
+    -o /data/output \
+    -v
+
+# 4. Check results
+ls /host/data/output/
 ```
 
 ## Project Structure
