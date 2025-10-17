@@ -65,8 +65,8 @@ EF5-docker/
 ## Technical Details
 
 ### Base Image
-- **OS**: Ubuntu (latest)
-- **Architecture**: Multi-platform support
+- **OS**: Ubuntu 22.04 LTS
+- **Architecture**: Multi-platform support (tested on ARM64 and x86_64)
 
 ### Installed Software
 - Git (for cloning EF5 repository)
@@ -74,11 +74,49 @@ EF5-docker/
 - Make (build system)
 - libgeotiff-dev (geospatial data support)
 - dh-autoreconf (autotools support)
+- Additional build tools: autoconf, automake, libtool, pkg-config
 
 ### EF5 Installation
 - **Source**: [HyDROSLab/EF5](https://github.com/HyDROSLab/EF5.git)
 - **Version**: Latest from main branch
 - **Build Process**: Automated compilation during image build
+- **Compilation Fixes**: Modified to handle buffer overflow warnings gracefully
+
+## Troubleshooting
+
+### Build Issues
+
+If you encounter compilation errors during the Docker build:
+
+1. **Buffer Overflow Warnings**: The EF5 source code contains some buffer overflow warnings in `DatedName.cpp`. These are handled by:
+   - Removing the `-Werror` flag from the Makefile
+   - Treating warnings as warnings instead of errors
+   - This allows the build to complete successfully
+
+2. **Missing Dependencies**: Ensure all required packages are installed:
+   ```bash
+   # The Dockerfile automatically installs all dependencies
+   # If building manually, install:
+   sudo apt-get install git gcc g++ build-essential make libgeotiff-dev dh-autoreconf autotools-dev autoconf automake libtool pkg-config
+   ```
+
+3. **Architecture Compatibility**: The container is tested on:
+   - ARM64 (Apple Silicon, ARM servers)
+   - x86_64 (Intel/AMD processors)
+
+### Runtime Issues
+
+1. **Permission Errors**: If you encounter permission issues when mounting volumes:
+   ```bash
+   # Run with proper user mapping
+   docker run -it --user $(id -u):$(id -g) -v /path/to/data:/data ef5-docker /bin/bash
+   ```
+
+2. **Missing Input Data**: Ensure you have the required input files for EF5:
+   - Configuration files
+   - DEM data
+   - Meteorological data
+   - Basin boundary files
 
 ## Contributing
 
